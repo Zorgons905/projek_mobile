@@ -1,218 +1,103 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test123/models/leaderboard_model.dart';
+import 'package:test123/providers/leaderboard_provider.dart';
 
-class LeaderboardPage extends StatefulWidget {
-  @override
-  _LeaderboardPageState createState() => _LeaderboardPageState();
-}
-
-class _LeaderboardPageState extends State<LeaderboardPage>
-    with SingleTickerProviderStateMixin {
-  int selectedIndex = 0;
-  late PageController _pageController;
+class LeaderboardPage extends ConsumerWidget {
+  const LeaderboardPage({Key? key}) : super(key: key);
 
   @override
-  void initState() {
-    _pageController = PageController();
-    super.initState();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leaderboardAsync = ref.watch(leaderboardDataProvider);
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _onTabTapped(int index) {
-    setState(() => selectedIndex = index);
-    _pageController.animateToPage(
-      index,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  Widget _buildCustomAppBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.blueGrey.shade800,
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-      ),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Dashboard",
-              style: TextStyle(fontSize: 20, color: Colors.white),
-            ),
-            Icon(Icons.menu, color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildTabButton("Progress", 0),
-        SizedBox(width: 16),
-        _buildTabButton("Quiz", 1),
-      ],
-    );
-  }
-
-  Widget _buildTabButton(String title, int index) {
-    bool isSelected = selectedIndex == index;
-    return ElevatedButton(
-      onPressed: () => _onTabTapped(index),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.blueGrey : Colors.grey.shade300,
-        foregroundColor: isSelected ? Colors.white : Colors.black,
-      ),
-      child: Text(title),
-    );
-  }
-
-  Widget _buildDropdownSection(
-    String title,
-    List<String> items,
-    VoidCallback onMoreTap,
-  ) {
-    return StatefulBuilder(
-      builder: (context, setInnerState) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-          ),
-          child: ExpansionTile(
-            initiallyExpanded: true,
-            collapsedIconColor: Colors.grey,
-            iconColor: Colors.white,
-            title: Text(title, style: TextStyle(color: Colors.white)),
-            children: [
-              ...items.take(3).map((item) {
-                return Card(
-                  color: Colors.white.withOpacity(0.05),
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: ListTile(
-                    title: Text(item, style: TextStyle(color: Colors.white)),
-                  ),
-                );
-              }),
-              if (items.length > 3)
-                GestureDetector(
-                  onTap: onMoreTap,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Card(
-                      color: Colors.white.withOpacity(0.05),
-                      child: ListTile(
-                        title: Text(
-                          "Lihat Semua",
-                          style: TextStyle(color: Colors.blueAccent),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildQuizList() {
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: [
-        _buildDropdownSection(
-          "Quiz 1",
-          ["Soal 1", "Soal 2", "Soal 3", "Soal 4", "Soal 5"],
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailPage(title: "Quiz 1")),
-          ),
-        ),
-        _buildDropdownSection(
-          "Quiz 2",
-          ["Soal A", "Soal B", "Soal C", "Soal D"],
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailPage(title: "Quiz 2")),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProgressList() {
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: [
-        _buildDropdownSection(
-          "Module 1",
-          ["Step 1", "Step 2", "Step 3", "Step 4"],
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailPage(title: "Module 1")),
-          ),
-        ),
-        _buildDropdownSection(
-          "Module 2",
-          ["Langkah A", "Langkah B", "Langkah C"],
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => DetailPage(title: "Module 2")),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey.shade900,
-      body: Column(
-        children: [
-          _buildCustomAppBar(),
-          SizedBox(height: 8),
-          _buildTabButtons(),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (index) => setState(() => selectedIndex = index),
-              children: [_buildProgressList(), _buildQuizList()],
-            ),
+      appBar: AppBar(
+        title: const Text('Leaderboard'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(leaderboardDataProvider); // Refresh data
+            },
           ),
+        ],
+      ),
+      body: leaderboardAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(
+          child: Text('Error: $err\nSilakan coba lagi.'),
+        ),
+        data: (leaderboardEntries) {
+          if (leaderboardEntries.isEmpty) {
+            return const Center(child: Text('Tidak ada data leaderboard.'));
+          }
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  _buildLeaderboardHeader(context),
+                  const Divider(height: 1, color: Colors.grey),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: leaderboardEntries.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final entry = leaderboardEntries[index];
+                      return _buildLeaderboardRow(index + 1, entry);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: const Row(
+        children: [
+          Expanded(flex: 1, child: Text('Rank', style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(flex: 4, child: Text('Nama Mahasiswa', style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(flex: 2, child: Text('Skor Kuis', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+          Expanded(flex: 2, child: Text('Progress Materi', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+          Expanded(flex: 2, child: Text('Kuis Selesai', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
         ],
       ),
     );
   }
-}
 
-class DetailPage extends StatelessWidget {
-  final String title;
-  const DetailPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Detail: $title")),
-      body: Center(child: Text("Menampilkan seluruh data $title")),
+  Widget _buildLeaderboardRow(int rank, LeaderboardEntry entry) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
+      color: rank.isEven ? Colors.grey[50] : Colors.white,
+      child: Row(
+        children: [
+          Expanded(flex: 1, child: Text('$rank', style: const TextStyle(fontWeight: FontWeight.w500))),
+          Expanded(flex: 4, child: Text(entry.studentName)),
+          Expanded(flex: 2, child: Text(entry.quizScore.toString(), textAlign: TextAlign.center)),
+          Expanded(
+            flex: 2,
+            child: Text(
+              '${(entry.materialProgress * 100).toInt()}%',
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(flex: 2, child: Text(entry.quizzesCompleted.toString(), textAlign: TextAlign.center)),
+        ],
+      ),
     );
   }
 }
