@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:test123/pages/create_class_page.dart';
 import 'package:test123/pages/create_quiz_page.dart';
+import 'package:test123/pages/join_class_page.dart';
 import 'package:test123/pages/library_page.dart';
 import 'package:test123/pages/profile_page.dart';
 import 'package:test123/pages/leaderboard_page.dart';
@@ -21,11 +23,12 @@ class _NavbarState extends State<Navbar> {
   late final List<Widget> _tabs;
   OverlayEntry? _overlayEntry;
 
+
   @override
   void initState() {
     super.initState();
     _tabs = [
-      HomePage(id: userID, role: widget.role),
+      HomePage(key: _homeKey, id: userID, role: widget.role),
       LibraryPage(id: userID, role: widget.role),
       LeaderboardPage(),
       ProfilePage(id: userID, role: widget.role),
@@ -148,7 +151,11 @@ class _NavbarState extends State<Navbar> {
   }
 
   void _navigateToCreateClass() {
-    Navigator.pushNamed(context, '/create-class');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CreateClassPage(lecturerId: userID)),
+    );
+    _homeKey.currentState?.fetchClassrooms();
   }
 
   void _navigateToUploadModule() {
@@ -159,7 +166,11 @@ class _NavbarState extends State<Navbar> {
   }
 
   void _navigateToJoinClass() {
-    Navigator.pushNamed(context, '/join-class');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => JoinClassPage(studentId: userID)),
+    );
+    _homeKey.currentState?.fetchClassrooms();
   }
 
   Widget _buildBottomNav() {

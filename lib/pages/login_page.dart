@@ -63,6 +63,22 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
   }
 
+  bool _obscureText = true;
+
+  void _showPasswordTemporarily() {
+    setState(() {
+      _obscureText = false;
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _obscureText = true;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;

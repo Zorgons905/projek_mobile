@@ -85,6 +85,52 @@ class _CreateQuestionPageState extends State<CreateQuestionPage> {
   }
 
   Future<void> _saveQuiz() async {
+    // Validasi isi quiz
+    for (int i = 0; i < questions.length; i++) {
+      final q = questions[i];
+
+      if (q.contentController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Pertanyaan #${i + 1} tidak boleh kosong')),
+        );
+        return;
+      }
+
+      if (q.answers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pertanyaan #${i + 1} harus memiliki jawaban'),
+          ),
+        );
+        return;
+      }
+
+      for (int j = 0; j < q.answers.length; j++) {
+        if (q.answers[j].contentController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Jawaban ${String.fromCharCode(65 + j)} di Pertanyaan #${i + 1} tidak boleh kosong',
+              ),
+            ),
+          );
+          return;
+        }
+      }
+
+      // Opsional: Pastikan minimal satu jawaban benar
+      if (!q.answers.any((a) => a.isCorrect)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Pertanyaan #${i + 1} harus memiliki minimal satu jawaban benar',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     try {
       final quiz = await _quizService.createQuiz(
         classroomId: widget.classroomId,
@@ -92,11 +138,12 @@ class _CreateQuestionPageState extends State<CreateQuestionPage> {
         isRandomizeQuestion: widget.isRandomizeQuestion,
         isRandomizeAnswer: widget.isRandomizeAnswer,
       );
+
       for (int i = 0; i < questions.length; i++) {
         final q = questions[i];
         final createdQuestion = await questionService.createQuestion(
           quizId: quiz.id,
-          content: q.contentController.text,
+          content: q.contentController.text.trim(),
           orderNumber: i + 1,
         );
 
@@ -125,7 +172,7 @@ class _CreateQuestionPageState extends State<CreateQuestionPage> {
         for (final answer in q.answers) {
           await answerService.createAnswer(
             questionId: createdQuestion.id,
-            content: answer.contentController.text,
+            content: answer.contentController.text.trim(),
             isCorrect: answer.isCorrect,
           );
         }
@@ -143,7 +190,6 @@ class _CreateQuestionPageState extends State<CreateQuestionPage> {
   }
 
   Widget _buildAnswerInput(AnswerInput answer, int index, int questionIndex) {
-    // Label A, B, C, D...
     final label = String.fromCharCode(65 + index);
 
     return Padding(

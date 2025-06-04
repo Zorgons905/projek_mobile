@@ -72,11 +72,18 @@ class ClassroomService {
   }
 
   // Update Classroom
-  Future<Classroom> updateClassroom({required String id, String? name}) async {
+  Future<Classroom> updateClassroom({
+    required String id,
+    String? name,
+    String? description,
+  }) async {
     final response =
         await _client
             .from('classroom')
-            .update({if (name != null) 'name': name})
+            .update({
+              if (name != null) 'name': name,
+              'description': description,
+            })
             .eq('id', id)
             .select()
             .single();

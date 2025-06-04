@@ -392,23 +392,27 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Positioned(
-              top: -100,
-              right: MediaQuery.of(context).size.width / 2 - 60,
-              child: GestureDetector(
-                onTap: _onProfilePictureTap,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
+                const SizedBox(height: 8),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: _onProfilePictureTap,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
                 ),
-              ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -431,16 +435,28 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 32),
 
             /// === PASSWORD ===
-            ElevatedButton.icon(
-              onPressed: () => _showChangePasswordDialog(context),
-              icon: const Icon(Icons.lock, color: Colors.white),
-              label: const Text(
-                "Ganti Password",
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _showChangePasswordDialog(context),
+                  icon: const Icon(Icons.lock, color: Colors.white),
+                  label: const Text(
+                    "Ganti Password",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _auth.signOut(),
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text(
+                    "Keluar",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                ),
+              ],
             ),
           ],
         ),
