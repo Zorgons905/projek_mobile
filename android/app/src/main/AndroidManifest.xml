@@ -24,9 +24,9 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
                   <action android:name="android.intent.action.VIEW"/>
-  <category android:name="android.intent.category.DEFAULT"/>
-  <category android:name="android.intent.category.BROWSABLE"/>
-  <data android:scheme="readaily" android:host="join"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="readaily" android:host="join"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
