@@ -1,14 +1,15 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:test123/pages/home_page.dart';
 import 'package:test123/services/auth_gate.dart';
 import 'package:test123/services/classroom_service.dart';
 import 'package:test123/services/student_class_service.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Supabase.initialize(
     url: 'https://gwwthlylotgwepuuyknh.supabase.co',
     anonKey:
@@ -27,18 +28,19 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  StreamSubscription? _sub;
+  StreamSubscription<Uri>? _linkSubscription;
   final navigatorKey = GlobalKey<NavigatorState>();
+  final AppLinks _appLinks = AppLinks();
 
   @override
   void initState() {
     super.initState();
-    _initUniLinks();
+    _initAppLinks();
   }
 
-  Future<void> _initUniLinks() async {
-    _sub = uriLinkStream.listen((Uri? uri) async {
-      if (uri != null && uri.path == '/join') {
+  Future<void> _initAppLinks() async {
+    _linkSubscription = _appLinks.uriLinkStream.listen((Uri uri) async {
+      if (uri.path == '/join') {
         final code = uri.queryParameters['code'];
         if (code != null) {
           final classroom = await ClassroomService().getClassroomByCode(code);
@@ -53,7 +55,6 @@ class _MyAppState extends State<MyApp> {
                 classroomId: classroom.id,
                 studentId: studentId,
               );
-              // Tampilkan dialog/halaman sukses
               navigatorKey.currentState?.push(
                 MaterialPageRoute(
                   builder: (_) => HomePage(id: studentId, role: 'student'),
@@ -68,7 +69,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _linkSubscription?.cancel();
     super.dispose();
   }
 
@@ -77,7 +78,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'READAILY',
-      home: AuthGate(), // halaman login awal
+      home: AuthGate(),
     );
   }
 }
