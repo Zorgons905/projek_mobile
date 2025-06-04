@@ -39,4 +39,20 @@ class Classroom {
       'created_at': createdAt?.toIso8601String(),
     };
   }
+
+  Classroom copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? code,
+    String? lecturerId,
+  }) {
+    return Classroom(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      code: code ?? this.code,
+      lecturerId: lecturerId ?? this.lecturerId,
+    );
+  }
 }

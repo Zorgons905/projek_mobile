@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:test123/pages/classroom_detail_page.dart';
 import 'package:test123/services/student_class_service.dart';
 import '../models/classroom.dart';
 import '../services/classroom_service.dart';
@@ -10,10 +12,10 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.role});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   final ClassroomService _classroomService = ClassroomService();
   final StudentClassService _studentClassService = StudentClassService();
   List<Classroom> _classrooms = [];
@@ -22,10 +24,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchClassrooms();
+    fetchClassrooms();
   }
 
-  Future<void> _fetchClassrooms() async {
+  Future<void> fetchClassrooms() async {
     setState(() => _loading = true);
     if (widget.role == 'lecturer') {
       _classrooms = await _classroomService.getClassroomsByLecturer(widget.id);
@@ -46,29 +48,6 @@ class _HomePageState extends State<HomePage> {
       _classrooms = classrooms;
     }
     setState(() => _loading = false);
-  }
-
-  void _showSnackbar(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  Future<void> _deleteClassroom(String id) async {
-    await _classroomService.deleteClassroom(id);
-    _showSnackbar('Kelas dihapus');
-    _fetchClassrooms();
-  }
-
-  Future<void> _leaveClassroom(String classroomId) async {
-    await _studentClassService.leaveClass(
-      classroomId: classroomId,
-      studentId: widget.id,
-    );
-    _showSnackbar('Berhasil keluar kelas');
-    _fetchClassrooms();
-  }
-
-  void _editClassroom(Classroom classroom) {
-    // Navigasi ke halaman edit
   }
 
   @override
@@ -94,15 +73,8 @@ class _HomePageState extends State<HomePage> {
                         final classroom = _classrooms[index];
                         return _ClassroomCard(
                           data: classroom,
-                          isLecturer: widget.role == 'lecturer',
-                          onEdit: () => _editClassroom(classroom),
-                          onDeleteOrLeave: () {
-                            if (widget.role == 'lecturer') {
-                              _deleteClassroom(classroom.id);
-                            } else {
-                              _leaveClassroom(classroom.id);
-                            }
-                          },
+                          id: widget.id,
+                          role: widget.role,
                         );
                       },
                     ),
@@ -147,142 +119,145 @@ class _CustomAppBar extends StatelessWidget {
 
 class _ClassroomCard extends StatelessWidget {
   final Classroom data;
-  final VoidCallback onEdit;
-  final VoidCallback onDeleteOrLeave;
-  final bool isLecturer;
+  final String id;
+  final String role;
 
   const _ClassroomCard({
     required this.data,
-    required this.onEdit,
-    required this.onDeleteOrLeave,
-    required this.isLecturer,
+    required this.role,
+    required this.id,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
-      width: double.infinity,
-      height: 140,
-      child: Stack(
-        children: [
-          // Background dekorasi bulatan besar di pojok
-          Positioned(
-            top: -40,
-            right: -40,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade300.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          // Background dekorasi kotak kecil transparan di kiri bawah
-          Positioned(
-            bottom: 10,
-            left: 10,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade200.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          // Card utama
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.blue.shade600,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.shade200.withOpacity(0.5),
-                  blurRadius: 10,
-                  offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => ClassroomDetailPage(
+                  classroom: data,
+                  role: role,
+                  userId: id,
                 ),
-              ],
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Informasi kelas
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        width: double.infinity,
+        height: 140,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade600,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.shade200.withOpacity(0.5),
+                      blurRadius: 10,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Info kelas
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data.name,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            data.description ?? '-',
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.blue.shade100,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Kode: ${data.code}',
+                            style: TextStyle(
+                              color: Colors.blue.shade100,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        data.description ?? '-',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.blue.shade100,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 14,
-                        ),
+                    ),
+
+                    // Tombol rantai
+                    GestureDetector(
+                      onTap: () {
+                        final joinLink = 'readaily://join?code=${data.code}';
+                        Clipboard.setData(ClipboardData(text: joinLink));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Link kelas disalin')),
+                        );
+                      },
+                      behavior: HitTestBehavior.translucent,
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.link, color: Colors.white),
                       ),
-                      const Spacer(),
-                      Text(
-                        'Kode: ${data.code}',
-                        style: TextStyle(
-                          color: Colors.blue.shade100,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Dekorasi tambahan...
+              Positioned(
+                top: -10,
+                left: -20,
+                child: Container(
+                  width: 100,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade200.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-
-                // Menu titik tiga
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      onEdit();
-                    } else if (value == 'delete_leave') {
-                      onDeleteOrLeave();
-                    }
-                  },
-                  itemBuilder: (BuildContext context) {
-                    if (isLecturer) {
-                      return [
-                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        const PopupMenuItem(
-                          value: 'delete_leave',
-                          child: Text('Hapus'),
-                        ),
-                      ];
-                    } else {
-                      return [
-                        const PopupMenuItem(
-                          value: 'delete_leave',
-                          child: Text('Keluar Kelas'),
-                        ),
-                      ];
-                    }
-                  },
+              ),
+              Positioned(
+                top: 80,
+                right: -30,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withAlpha(500),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
+
 
 
 

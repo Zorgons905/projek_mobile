@@ -37,6 +37,22 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
   }
 
+  bool _obscureText = true;
+
+  void _showPasswordTemporarily() {
+    setState(() {
+      _obscureText = false;
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _obscureText = true;
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,8 +67,17 @@ class _LoginPageState extends State<LoginPage> {
             ),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: _showPasswordTemporarily,
+                  tooltip: 'L',
+                ),
+              ),
+              obscureText: _obscureText,
             ),
             const SizedBox(height: 16),
             ElevatedButton(

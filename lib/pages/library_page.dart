@@ -15,10 +15,10 @@ class LibraryPage extends StatefulWidget {
   final String role;
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  State<LibraryPage> createState() => LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class LibraryPageState extends State<LibraryPage> {
   final ModuleService _moduleService = ModuleService();
   final ClassroomService _classroomService = ClassroomService();
   final ProfileService _profileService = ProfileService();
@@ -34,7 +34,7 @@ class _LibraryPageState extends State<LibraryPage> {
   bool isLoading = true;
 
   // Sorting & Searching
-  String sortBy = 'name'; // name, date, progress
+  String sortBy = 'name';
   bool isAscending = true;
   String searchQuery = '';
   bool isGridView = false;
