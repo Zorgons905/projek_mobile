@@ -15,12 +15,11 @@ class Navbar extends StatefulWidget {
   State<Navbar> createState() => _NavbarState();
 }
 
-class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
+class _NavbarState extends State<Navbar> {
   int _currentIndex = 0;
   final userID = AuthService().getCurrentUserID();
   late final List<Widget> _tabs;
   OverlayEntry? _overlayEntry;
-  late AnimationController _fabAnimationController;
 
   @override
   void initState() {
@@ -31,27 +30,19 @@ class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
       LeaderboardPage(),
       ProfilePage(id: userID, role: widget.role),
     ];
-
-    _fabAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
   }
 
   @override
   void dispose() {
-    _fabAnimationController.dispose();
     _overlayEntry?.remove();
     super.dispose();
   }
 
   void _toggleOverlayMenu() {
     if (_overlayEntry == null) {
-      _fabAnimationController.forward();
       _overlayEntry = _buildOverlayEntry();
       Overlay.of(context).insert(_overlayEntry!);
     } else {
-      _fabAnimationController.reverse();
       _removeOverlay();
     }
   }
@@ -68,7 +59,6 @@ class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () {
-            _fabAnimationController.reverse();
             _removeOverlay();
           },
           child: Stack(
@@ -101,7 +91,6 @@ class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
         GestureDetector(
           onTap: () {
             _removeOverlay();
-            _fabAnimationController.reverse();
             onTap();
           },
           child: Container(
@@ -139,21 +128,12 @@ class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildFAB() {
-    return AnimatedBuilder(
-      animation: _fabAnimationController,
-      builder: (_, child) {
-        return Transform.rotate(
-          angle: _fabAnimationController.value * 3.14 * 1.5,
-          child: child,
-        );
-      },
-      child: FloatingActionButton(
-        onPressed: _toggleOverlayMenu,
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(), // lingkaran
-        child: const Icon(Icons.add, size: 28),
-      ),
+    return FloatingActionButton(
+      onPressed: _toggleOverlayMenu,
+      backgroundColor: Colors.blue,
+      foregroundColor: Colors.white,
+      shape: const CircleBorder(),
+      child: const Icon(Icons.add, size: 28),
     );
   }
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter/widgets.dart'; // Ini tidak selalu diperlukan jika hanya pakai Material widgets
 import 'register_page.dart';
 import '../services/auth_service.dart'; // Pastikan ini mengarah ke AuthService Anda yang benar
 
@@ -74,7 +73,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       // Pastikan resizeToAvoidBottomInset diatur true (default)
-      resizeToAvoidBottomInset: true, 
+      resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -137,8 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 15), // Reduced from 20
                   _buildTextField(_passwordController, 'Password', Icons.lock,
                       obscureText: true),
-                  const SizedBox(height: 15), // Reduced from 20
-                  _buildRoleDropdown(),
                   const SizedBox(height: 15), // Reduced from 20
                   Align(
                     alignment: Alignment.centerRight,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:test123/services/auth_gate.dart';
 
@@ -10,7 +11,9 @@ void main() async {
     debug: true,
   );
 
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(child: MyApp()),
+    );
 }
 
 class MyApp extends StatelessWidget {

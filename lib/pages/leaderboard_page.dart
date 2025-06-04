@@ -1,32 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test123/models/leaderboard_model.dart';
-import 'package:test123/services/leaderboard_service.dart';
+import 'package:test123/providers/leaderboard_provider.dart';
 
-class LeaderboardPage extends StatefulWidget {
+class LeaderboardPage extends ConsumerWidget {
   const LeaderboardPage({Key? key}) : super(key: key);
 
   @override
-  State<LeaderboardPage> createState() => _LeaderboardPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leaderboardAsync = ref.watch(leaderboardDataProvider);
 
-class _LeaderboardPageState extends State<LeaderboardPage> {
-  late Future<List<LeaderboardEntry>> _leaderboardData;
-
-  @override
-  void initState() {
-    super.initState();
-    _leaderboardData = LeaderboardService().getLeaderboardData();
-  }
-
-  // Fungsi untuk me-refresh data leaderboard
-  Future<void> _refreshLeaderboard() async {
-    setState(() {
-      _leaderboardData = LeaderboardService().getLeaderboardData();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Leaderboard'),
@@ -34,56 +17,50 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _refreshLeaderboard,
+            onPressed: () {
+              ref.invalidate(leaderboardDataProvider); // Refresh data
+            },
           ),
         ],
       ),
-      body: FutureBuilder<List<LeaderboardEntry>>(
-        future: _leaderboardData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}\nSilakan coba lagi.'),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+      body: leaderboardAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(
+          child: Text('Error: $err\nSilakan coba lagi.'),
+        ),
+        data: (leaderboardEntries) {
+          if (leaderboardEntries.isEmpty) {
             return const Center(child: Text('Tidak ada data leaderboard.'));
-          } else {
-            // Data berhasil dimuat
-            final leaderboardEntries = snapshot.data!;
-
-            return SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    // Header Tabel
-                    _buildLeaderboardHeader(),
-                    const Divider(height: 1, color: Colors.grey),
-                    // List Entri Leaderboard
-                    ListView.separated(
-                      shrinkWrap: true, // Penting agar ListView tidak mengambil semua ruang
-                      physics: const NeverScrollableScrollPhysics(), // Menonaktifkan scroll ListView
-                      itemCount: leaderboardEntries.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final entry = leaderboardEntries[index];
-                        return _buildLeaderboardRow(index + 1, entry);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
           }
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  _buildLeaderboardHeader(context),
+                  const Divider(height: 1, color: Colors.grey),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: leaderboardEntries.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final entry = leaderboardEntries[index];
+                      return _buildLeaderboardRow(index + 1, entry);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget _buildLeaderboardHeader() {
+  Widget _buildLeaderboardHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
       decoration: BoxDecoration(

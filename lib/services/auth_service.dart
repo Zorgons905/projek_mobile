@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Sign in
+  // Sign in (hanya autentikasi email & password)
   Future<AuthResponse> signInWithEmailPassword(
     String email,
     String password,
@@ -13,17 +13,8 @@ class AuthService {
       password: password,
     );
 
-    final userId = res.user!.id;
-
-    final profile =
-        await _supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', userId)
-            .maybeSingle();
-
-    if (profile == null || profile['role'] != 'lecturer') {
-      throw Exception("Akun ini bukan guru");
+    if (res.user == null) {
+      throw Exception("Gagal login. Email atau password salah.");
     }
 
     return res;
@@ -59,14 +50,13 @@ class AuthService {
     return _supabase.auth.currentUser!.id;
   }
 
-  /// ✅ Change password with re-authentication
+  // Ganti password
   Future<void> changePassword({
     required String email,
     required String oldPassword,
     required String newPassword,
   }) async {
     try {
-      // Step 1: Re-authenticate
       final res = await _supabase.auth.signInWithPassword(
         email: email,
         password: oldPassword,
@@ -76,7 +66,6 @@ class AuthService {
         throw Exception("Password lama salah.");
       }
 
-      // Step 2: Update password
       await _supabase.auth.updateUser(UserAttributes(password: newPassword));
     } catch (e) {
       throw Exception("Gagal mengganti password: $e");
