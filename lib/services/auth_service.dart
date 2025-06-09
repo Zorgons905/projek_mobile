@@ -12,20 +12,6 @@ class AuthService {
       email: email,
       password: password,
     );
-
-    final userId = res.user!.id;
-
-    final profile =
-        await _supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', userId)
-            .maybeSingle();
-
-    if (profile == null || profile['role'] != 'lecturer') {
-      throw Exception("Akun ini bukan guru");
-    }
-
     return res;
   }
 
