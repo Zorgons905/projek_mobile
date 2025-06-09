@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/classroom_service.dart';
+import 'package:provider/provider.dart'; // Import provider
+import '../providers/classroom_provider.dart'; // Import your ClassroomProvider
 
 class CreateClassPage extends StatefulWidget {
   final String lecturerId;
@@ -14,7 +15,7 @@ class _CreateClassPageState extends State<CreateClassPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
-  final ClassroomService _classroomService = ClassroomService();
+  // Removed: final ClassroomService _classroomService = ClassroomService(); // No longer instantiate directly
 
   bool _isCreating = false;
 
@@ -24,20 +25,51 @@ class _CreateClassPageState extends State<CreateClassPage> {
     setState(() => _isCreating = true);
 
     try {
-      final classroom = await _classroomService.createClassroom(
+      // Access the ClassroomProvider and call its createClassroom method
+      final classroomProvider = Provider.of<ClassroomProvider>(context, listen: false);
+      final classroom = await classroomProvider.createClassroom(
         name: _nameController.text,
         description: _descController.text,
         lecturerId: widget.lecturerId,
       );
 
-      Navigator.pop(context, classroom); // Kembali ke halaman sebelumnya
+      if (classroom != null) {
+        // Class successfully created and provider notified its listeners
+        if (mounted) { // Check if the widget is still mounted before popping
+          Navigator.pop(context); // Just pop, no need to pass data back explicitly
+        }
+      } else {
+        // Handle error if classroom was not created (e.g., error message from provider)
+        if (mounted && classroomProvider.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal membuat kelas: ${classroomProvider.errorMessage}')),
+          );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal membuat kelas: Terjadi kesalahan tidak dikenal')),
+          );
+        }
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal membuat kelas: $e')));
+      // This catch block would only be hit if something unexpected happens
+      // outside of the provider's try-catch.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan eksternal: $e')),
+        );
+      }
     } finally {
-      setState(() => _isCreating = false);
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
   }
 
   @override
@@ -53,11 +85,10 @@ class _CreateClassPageState extends State<CreateClassPage> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Nama Kelas'),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Nama tidak boleh kosong'
-                            : null,
+                validator: (value) =>
+                value == null || value.isEmpty
+                    ? 'Nama tidak boleh kosong'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -68,14 +99,13 @@ class _CreateClassPageState extends State<CreateClassPage> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isCreating ? null : _submit,
-                child:
-                    _isCreating
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Text('Buat Kelas'),
+                child: _isCreating
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Text('Buat Kelas'),
               ),
             ],
           ),

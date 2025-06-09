@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart'; // Import provider
 import '../pages/classroom_detail_page.dart';
-import '../services/student_class_service.dart';
 import '../models/classroom.dart';
-import '../services/classroom_service.dart';
+import '../providers/classroom_provider.dart';
 
 class HomePage extends StatefulWidget {
   final String id;
@@ -16,74 +16,54 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  final ClassroomService _classroomService = ClassroomService();
-  final StudentClassService _studentClassService = StudentClassService();
-  List<Classroom> _classrooms = [];
-  bool _loading = true;
-
   @override
   void initState() {
     super.initState();
-    fetchClassrooms();
-  }
-
-  Future<void> fetchClassrooms() async {
-    setState(() => _loading = true);
-    if (widget.role == 'lecturer') {
-      _classrooms = await _classroomService.getClassroomsByLecturer(widget.id);
-    } else {
-      // Untuk student, ambil dulu student_class dulu
-      final studentClasses = await _studentClassService.getStudentClasses(
-        widget.id,
-      );
-
-      // Dari relasi student_class ambil classroom_id dan fetch class data
-      final classrooms = <Classroom>[];
-      for (final sc in studentClasses) {
-        final classroom = await _classroomService.getClassroom(sc.classroomId);
-        if (classroom != null) {
-          classrooms.add(classroom);
-        }
-      }
-      _classrooms = classrooms;
-    }
-    setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watch the ClassroomProvider for changes
+    final classroomProvider = Provider.of<ClassroomProvider>(context);
+
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
       body: Column(
         children: [
           const _CustomAppBar(),
           Expanded(
-            child:
-                _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _classrooms.isEmpty
-                    ? const Center(child: Text('Belum ada kelas'))
-                    : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      itemCount: _classrooms.length,
-                      itemBuilder: (context, index) {
-                        final classroom = _classrooms[index];
-                        return _ClassroomCard(
-                          data: classroom,
-                          id: widget.id,
-                          role: widget.role,
-                        );
-                      },
-                    ),
+            child: classroomProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : classroomProvider.errorMessage != null
+                ? Center(child: Text('Error: ${classroomProvider.errorMessage}'))
+                : classroomProvider.classrooms.isEmpty
+                ? const Center(child: Text('Belum ada kelas'))
+                : ListView.builder(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              itemCount: classroomProvider.classrooms.length,
+              itemBuilder: (context, index) {
+                final classroom = classroomProvider.classrooms[index];
+                return _ClassroomCard(
+                  data: classroom,
+                  id: widget.id,
+                  role: widget.role,
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+// _CustomAppBar and _ClassroomCard remain mostly the same as they don't directly
+// interact with the provider for data fetching, only using the data passed to them.
+// If _ClassroomCard needs to trigger an action (e.g., delete classroom) that
+// modifies the list, it would also use Provider.of<ClassroomProvider>(context, listen: false).method().
 
 class _CustomAppBar extends StatelessWidget {
   const _CustomAppBar();
@@ -135,12 +115,11 @@ class _ClassroomCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (_) => ClassroomDetailPage(
-                  classroom: data,
-                  role: role,
-                  userId: id,
-                ),
+            builder: (_) => ClassroomDetailPage(
+              classroom: data,
+              role: role,
+              userId: id,
+            ),
           ),
         );
       },
@@ -257,120 +236,3 @@ class _ClassroomCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-  // final ClassroomService _classroomService = ClassroomService();
-
-  // late Future<List<Map<String, dynamic>>> _futureClassrooms;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _futureClassrooms = _fetchClassrooms();
-  // }
-
-  // Future<List<Map<String, dynamic>>> _fetchClassrooms() {
-  //   if (widget.role == 'lecturer') {
-  //     return _classroomService.getClassroomsByLecturer(widget.id);
-  //   } else {
-  //     return _classroomService.getClassroomsByStudent(widget.id);
-  //   }
-  // }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   final isLecturer = widget.role == 'lecturer';
-
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('Daftar Kelas'),
-  //       backgroundColor: Colors.blue[700],
-  //     ),
-  //     body: Padding(
-  //       padding: const EdgeInsets.all(16.0),
-  //       child: FutureBuilder<List<Map<String, dynamic>>>(
-  //         future: _futureClassrooms,
-  //         builder: (context, snapshot) {
-  //           if (snapshot.connectionState == ConnectionState.waiting) {
-  //             return const Center(child: CircularProgressIndicator());
-  //           }
-
-  //           if (snapshot.hasError) {
-  //             return Center(
-  //               child: Text('Terjadi kesalahan: ${snapshot.error}'),
-  //             );
-  //           }
-
-  //           final classrooms = snapshot.data ?? [];
-
-  //           if (classrooms.isEmpty) {
-  //             return const Center(child: Text('Belum ada kelas.'));
-  //           }
-
-  //           return ListView.builder(
-  //             itemCount: classrooms.length,
-  //             itemBuilder: (context, index) {
-  //               final classroom =
-  //                   isLecturer
-  //                       ? classrooms[index] // langsung
-  //                       : classrooms[index]['classroom']; // dari relasi student_class
-
-  //               return GestureDetector(
-  //                 onTap: () {
-  //                   Navigator.push(
-  //                     context,
-  //                     MaterialPageRoute(
-  //                       builder:
-  //                           (_) => ClassroomDetailPage(
-  //                             classroomId: classroom['id'].toString(),
-  //                             classroomName: classroom['name'],
-  //                             role: widget.role,
-  //                           ),
-  //                     ),
-  //                   );
-  //                 },
-  //                 child: Container(
-  //                   margin: const EdgeInsets.only(bottom: 16),
-  //                   padding: const EdgeInsets.all(16),
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.white,
-  //                     borderRadius: BorderRadius.circular(12),
-  //                     boxShadow: [
-  //                       BoxShadow(
-  //                         blurRadius: 4,
-  //                         color: Colors.black12,
-  //                         offset: const Offset(2, 2),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       Text(
-  //                         classroom['name'],
-  //                         style: const TextStyle(
-  //                           fontSize: 18,
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 6),
-  //                       Text(
-  //                         isLecturer
-  //                             ? 'Kode Kelas: ${classroom['code']}'
-  //                             : 'Dosen: ${classroom['lecturer_id']}',
-  //                         style: TextStyle(color: Colors.grey[700]),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               );
-  //             },
-  //           );
-  //         },
-  //       ),
-  //     ),
-  //   );
-  // }

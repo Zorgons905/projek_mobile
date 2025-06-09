@@ -175,7 +175,6 @@ class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
       context,
       MaterialPageRoute(builder: (_) => CreateClassPage(lecturerId: userID)),
     );
-    _homeKey.currentState?.fetchClassrooms();
   }
 
   void _navigateToUploadModule() {
@@ -190,7 +189,6 @@ class _NavbarState extends State<Navbar> with SingleTickerProviderStateMixin {
       context,
       MaterialPageRoute(builder: (_) => JoinClassPage(studentId: userID)),
     );
-    _homeKey.currentState?.fetchClassrooms();
   }
 
   Widget _buildBottomNav() {

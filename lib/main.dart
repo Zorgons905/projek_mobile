@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:readaily/providers/classroom_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../pages/home_page.dart';
+import 'package:provider/provider.dart'; // Import the provider package
+
 import '../services/auth_gate.dart';
-import '../services/classroom_service.dart';
-import '../services/student_class_service.dart';
-import 'package:app_links/app_links.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,11 +11,20 @@ void main() async {
   await Supabase.initialize(
     url: 'https://gwwthlylotgwepuuyknh.supabase.co',
     anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3d3RobHlsb3Rnd2VwdXV5a25oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2OTUzNTgsImV4cCI6MjA2NDI3MTM1OH0.lzRAwas43s_dk7FTzTjIrEwzYfk5G5PxEeN7XIvWKFg',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3d3RobHlsb3Rnd2VwdXV5a25oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2OTUzNTgsImV4cCI6MjA2NDI3MTM1OH0.lzRAwas43s_dk7FTzTjIrEwzYfk5G5PxEeN7XIvWKFg',
     debug: true,
   );
 
-  runApp(const MyApp());
+  runApp(
+    // Wrap your app with MultiProvider to provide ClassroomProvider
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ClassroomProvider()),
+        // Add other providers here if you have more services to manage
+      ],
+      child: const MyApp(), // Your main app widget
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -28,48 +35,16 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  StreamSubscription<Uri>? _linkSubscription;
-  final navigatorKey = GlobalKey<NavigatorState>();
-  final AppLinks _appLinks = AppLinks();
-
   @override
   void initState() {
     super.initState();
-    _initAppLinks();
-  }
-
-  Future<void> _initAppLinks() async {
-    _linkSubscription = _appLinks.uriLinkStream.listen((Uri uri) async {
-      if (uri.path == '/join') {
-        final code = uri.queryParameters['code'];
-        if (code != null) {
-          final classroom = await ClassroomService().getClassroomByCode(code);
-          final studentId = Supabase.instance.client.auth.currentUser?.id;
-          if (classroom != null && studentId != null) {
-            final alreadyJoined = await StudentClassService().isStudentInClass(
-              classroomId: classroom.id,
-              studentId: studentId,
-            );
-            if (!alreadyJoined) {
-              await StudentClassService().joinClass(
-                classroomId: classroom.id,
-                studentId: studentId,
-              );
-              navigatorKey.currentState?.push(
-                MaterialPageRoute(
-                  builder: (_) => HomePage(id: studentId, role: 'student'),
-                ),
-              );
-            }
-          }
-        }
-      }
-    });
+    // No need to fetch data here; HomePage will trigger the fetch
   }
 
   @override
   void dispose() {
-    _linkSubscription?.cancel();
+    // You typically don't need to dispose providers manually here
+    // as MultiProvider handles their lifecycle.
     super.dispose();
   }
 
@@ -77,9 +52,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      navigatorKey: navigatorKey,
       title: 'Readaily',
-      home: AuthGate(),
+      home: AuthGate(), // AuthGate will eventually lead to HomePage
     );
   }
 }
